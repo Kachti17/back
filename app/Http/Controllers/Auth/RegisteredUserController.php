@@ -31,23 +31,27 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:users,email', // Vérifie l'unicité de l'email dans la table 'users'
             'password' => 'required|string|min:6',
             'tel' => 'nullable|string|max:20',
+            'role' => 'nullable|in:back office,user,admin',
         ]);
 
         if (User::where('email', $request->email)->exists()) {
             return response()->json(['error' => 'Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre.'], 400);
         }
 
-        if (User::where('password', Hash::make($request->password))->exists()) {
+        if (User::where('password', $request->password)->exists()) {
             return response()->json(['error' => 'Ce mot de passe est déjà utilisé. Veuillez en choisir un autre.'], 400);
+        }
+        if ($request->role === 'admin' && User::where('role', 'admin')->exists()) {
+            return response()->json(['error' => 'Un administrateur existe déjà.'], 400);
         }
 
         $user = User::create([
             'nom' => $request->nom,
             'prenom' => $request->prenom,
             'email' => $request->email,
-            //'password' => $request->password,
-          'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'tel' => $request->tel,
+            'role' => $request->role ?? 'user',
         ]);
         $password = $request->password;
 

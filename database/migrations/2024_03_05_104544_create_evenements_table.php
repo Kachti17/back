@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id');
             $table->text('description');
             $table->string('image')->nullable();
-            $table->timestamp('date_event');
+            $table->longText('date_event');
             $table->string('lieu_event');
             $table->integer('nbr_max');
             $table->integer('nbr_participants');

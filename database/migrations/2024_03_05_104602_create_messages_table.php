@@ -16,8 +16,8 @@ return new class extends Migration
             $table->text('corps');
             $table->unsignedBigInteger('user_id');
             $table->integer('chat_room_id');
-           // $table->unsignedBigInteger('userDest_id');
-            $table->timestamp('date_envoie');
+            $table->timestamps();
+            // $table->unsignedBigInteger('userDest_id');
            // $table->foreign('user_id')->references('id')->on('users');
            // $table->foreign('userDest_id')->references('id')->on('users');
 

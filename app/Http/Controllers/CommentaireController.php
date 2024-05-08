@@ -46,21 +46,21 @@ class CommentaireController extends Controller
         }
     }
 
+    public function afficherCommentaires(Request $request,$postId)
+    {
+        $nombreCommentaires = $request->input("nombreCommentaires");
 
-    public function afficherCommentaires($postId)
-{
-    $post = Publication::where('id', $postId)->where('isApproved', 1)->first();
+        $commentaires = Commentaire::where('pub_id', $postId)
+                                    ->orderBy('updated_at', 'asc')
+                                    ->take($request->input("nombreCommentaires"))
+                                    ->get();
 
-    if (!$post) {
-        return response()->json(['message' => 'Post non trouvé ou non approuvé'], 404);
+        return response()->json([
+            'commentaires' => $commentaires,
+
+        ]);
     }
 
-    $commentaires = Commentaire::where('pub_id', $postId)->get();
-
-    return response()->json([
-        'commentaires' => $commentaires,
-    ]);
-}
 
 
 
@@ -93,7 +93,7 @@ public function deleteCommentaire($id)
 {
     $commentaire = Commentaire::findOrFail($id);
 
-    if ($commentaire->user_id !== Auth::id()) {
+    if ($commentaire->user_id !== Auth::id()&& Auth::user()->role !== 'admin') {
         return redirect()->back()->with('error', 'Vous n\'êtes pas autorisé à supprimer ce commentaire');
     }
     $publication = Publication::findOrFail($commentaire->pub_id);

@@ -12,6 +12,41 @@ use Illuminate\Support\Facades\Auth;
 
 class ReactionPostController extends Controller
 {
+
+
+    public function reactOrUnreact($pub_id)
+{
+    $user_id = auth()->id();
+
+    $existingReaction = ReactionPost::with('user', 'publication')
+                                    ->where('pub_id', $pub_id)
+                                    ->where('user_id', $user_id)
+                                    ->first();
+
+    if ($existingReaction) {
+        // L'utilisateur a déjà réagi, donc unreact
+        $existingReaction->delete();
+
+        $post = $existingReaction->publication;
+        $post->nbr_react--;
+        $post->save();
+
+        return response()->json(['message' => 'Vous avez retiré votre réaction.', 'publication' => $post]);
+    } else {
+        // L'utilisateur n'a pas encore réagi, donc react
+        $post = Publication::find($pub_id);
+        $post->nbr_react++;
+        $post->save();
+
+        ReactionPost::create([
+            'pub_id' => $pub_id,
+            'user_id' => $user_id,
+            'hasReaction' => true,
+        ]);
+
+        return response()->json(['message' => 'Réaction enregistrée avec succès.', 'publication' => $post]);
+    }
+}
     public function react($pub_id)
 {
     $user_id = auth()->id();
@@ -63,8 +98,7 @@ public function unreact($pub_id)
 
 public function checkUserReaction($pub_id)
 {
-    $reactions = ReactionPost::with('user')
-                             ->where('pub_id', $pub_id)
+    $reactions = ReactionPost::where('pub_id', $pub_id)
                              ->where('user_id', Auth::id())
                              ->exists();
 

@@ -11,20 +11,15 @@ class Message extends Model
     protected $fillable = ['corps','user_id'];
 
 
-    public function sender()
+    public function user()
     {
         return $this->belongsTo(User::class,'user_id');
     }
     public function room()
     {
-        return $this->hasOne('App\Models\ChatRoom','id','chat_room_id');
+        return $this->hasOne(ChatRoom::class, 'id', 'chat_room_id');
 
     }
 
-
-    // public function receiver()
-    // {
-    //     return $this->belongsTo(User::class, 'userDes_id');
-    // }
 
 }

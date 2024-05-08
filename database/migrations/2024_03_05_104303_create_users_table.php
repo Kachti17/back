@@ -19,7 +19,7 @@ return new class extends Migration
         $table->string('password');
         $table->string('tel')->nullable();
         $table->string('img_profile')->nullable();
-       // $table->foreignId('role_id')->constrained('roles')->nullable();
+        $table->string('role')->default('admin');
         $table->timestamps();
     });
 }

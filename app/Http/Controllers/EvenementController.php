@@ -6,7 +6,7 @@ use App\Models\Evenement;
 use App\Http\Requests\StoreEvenementRequest;
 use App\Http\Requests\UpdateEvenementRequest;
 use App\Http\Requests\FormulaireEventRequest;
-
+use Illuminate\Support\Str;
 use App\Http\Controllers\Attribute;
 
 use Illuminate\Support\Facades\Storage;
@@ -31,19 +31,7 @@ class EvenementController extends Controller
     }
 
 
-    private function saveImage($image)
-{
-    if ($image->isValid()) {
-        $path = $image->store('public/images'); // Sauvegarde l'image dans le dossier public/images
 
-        // Récupère l'URL de l'image sauvegardée
-        $url = Storage::url($path);
-
-        return $url;
-    }
-
-    return null;
-}
 
 public function createEvent(Request $request)
 {
@@ -54,26 +42,22 @@ public function createEvent(Request $request)
             'lieu_event' => 'required|string',
             'nbr_max' => 'required|integer',
             'date_event' => 'required|date_format:Y-m-d\TH:i',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|string',
         ]);
 
         $evenement = new Evenement();
         $evenement->description = $validatedData['description'];
         $evenement->lieu_event = $validatedData['lieu_event'];
         $evenement->nbr_max = $validatedData['nbr_max'];
-        $evenement->nbr_participants = 1; // On suppose que le créateur est le premier participant
+        $evenement->nbr_participants = 1;
         $evenement->date_event = $validatedData['date_event'];
-        $evenement->user_id = Auth::id(); // Attribution de l'ID de l'utilisateur actuel
+        $evenement->user_id = Auth::id();
 
-        if ($request->hasFile('image')) {
-            // Sauvegarde l'image et récupère son URL
-            $imageUrl = $this->saveImage($request->file('image'));
+        $request['base64string'] = $this->handleFileUpload($request['image'], 'images/evenements/');
+        $evenement->image = $request['base64string'];
 
-            // Attribution de l'URL de l'image à l'instance d'evenement
-            $evenement->image = $imageUrl;
-        }
 
-        // Sauvegarde de l'evenement
+
         $evenement->save();
 
         // Création d'une entrée participant pour le créateur
@@ -83,107 +67,53 @@ public function createEvent(Request $request)
         $participant->inscription_date = now();
         $participant->save();
 
-        return response()->json(['message' => 'Event has been successfully created.'], 200);
+        return response()->json(['message' => 'L\'événement a été créé avec succès.','evenement' => $evenement], 200);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Erreur lors de la création de l\'événement. Veuillez réessayer.'], 500);
     }
 }
-    // public function createEvent(Request $request)
-    // {
-    //     try {
-    //         $validatedData = $request->validate([
-    //             'description' => 'required|string',
-    //             'lieu_event' => 'required|string',
-    //             'nbr_max' => 'required|integer',
-    //             'date_event' => 'required|date_format:Y-m-d\TH:i' ,
-    //             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    //         ]);
-
-    //         $eventDate = Carbon::createFromFormat('Y-m-d\TH:i', $validatedData['date_event']);
-    //         $now = Carbon::now();
-
-    //         if ($eventDate->isBefore($now)) {
-    //             return response()->json(['error' => 'La date de l\'événement ne peut pas être antérieure à la date actuelle.'], 400);
-    //         }
 
 
-    //         $evenement = new Evenement();
-    //         $evenement->description = $validatedData['description'];
-    //         $evenement->lieu_event = $validatedData['lieu_event'];
-    //         $evenement->nbr_max = $validatedData['nbr_max'];
-    //         $evenement->nbr_participants = 1;
-    //         $evenement->date_event = $validatedData['date_event'];
-    //         $evenement->user_id = Auth::id();
-
-    //         if ($request->hasFile('image')) {
-    //             $imagePath = $this->saveImage($request->file('image'));
-    //             $evenement->image = $imagePath;
-    //         }
-
-    //         $evenement->save();
-
-    //         $participant = new Participant();
-    //         $participant->user_id = Auth::id();
-    //         $participant->evenement_id = $evenement->id;
-    //         $participant->inscription_date = now();
-    //         $participant->save();
+public function handleFileUpload(string|null $file, string $path)
+    {
+        if (isset($file) && Str::contains($file, 'base64')) {
 
 
-    //         return response()->json(['message' => 'Événement créé avec succès.'], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => 'Erreur lors de la création de l\'événement. Veuillez réessayer.'], 500);
-    //     }
-    // }
-//     private function uploadImage(Request $request)
-//     {
-//         if ($request->hasFile('image')) {
-//             $imagePath = Storage::put("/images/evenements",$request->file('image'));
-//             dd($imagePath);
-//             return response()->json(['message' => 'image uploaded successfully']);
+            $decodedFile = $this->decodedBase64File($file);
+            $storePath = $path . $decodedFile['path'];
 
-//         }
+            // dd($storePath );
 
-//         return response()->json(['message' => 'image not uploaded ']);
-//     }
-//     private function image($image): Attribute
-// {
-//     return Attribute::make([
-//         'get' => fn ($value) => asset(Storage::url($value) ?? 'noImg.png'),
-//     ]);
-// // }
-// private function saveImage($uploadedImage)
-// {
+            // dd($decodedFile);
+            $res = Storage::disk('public')->put($storePath,  $decodedFile['file']);
 
-//     // Store the uploaded image file
-//     $imagePath = $uploadedImage->store('image', 'public');
+            // $res = Storage::disk('digitalocean')->put($storePath, $decodedFile['file']);
+
+            if ($res) {
+                return $storePath;
+            }
+        }
+
+        return null;
+    }
 
 
 
-//     return $imagePath ;
-//     // {
-//     //     // Validate incoming request (e.g., file type, size)
-//     //     $request->validate([
-//     //         'image' => 'required|image|max:2048', // Assuming image is uploaded via 'image' field
-//     //     ]);
+public function decodedBase64File($file_64)
+    {
+        $extension = explode('/', explode(':', substr($file_64, 0, strpos($file_64, ';')))[1])[1];
+        $replace = substr($file_64, 0, strpos($file_64, ',')+1);
+        $file = str_replace($replace, '', $file_64);
+        $decodedFile = str_replace(' ', '+', $file);
+        $path =  Str::random(5) . time() .'.'. $extension;
 
-//     //     // Get the base64 encoded image data
-//     //     $base64Image = base64_encode(file_get_contents($request->file('image')));
+        return [
+            'path' => $path,
+            'file' => base64_decode($decodedFile)
+        ];
+    }
 
-//     //     // Store the base64 string in the database using DB facade
-//     //     DB::table('evenements')->insert([
-//     //         'image' => $base64Image,
 
-//     //     ]);
-
-//     //     return response()->json(['message' => 'Image stored successfully'], 201);
-//     // if ($image->isValid()) {
-//     //     $path = $image->store('app/images/evenements');
-
-//     //     return str_replace('app/', 'storage/', $path);
-//     // }
-
-//     // return null;
-// }
 
 
 
@@ -242,7 +172,8 @@ public function createEvent(Request $request)
     public function showEvents()
     {
         try {
-            $evenements = Evenement::where('date_event', '>', now())->get();
+            $evenements = Evenement::where('date_event', '>', now()) ->orderBy('date_event', 'desc')
+                ->get();
 
             return response()->json($evenements, 200);
         } catch (\Exception $e) {

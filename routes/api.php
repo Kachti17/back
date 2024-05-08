@@ -11,6 +11,8 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommentaireController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ChatController;
+
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReactionPostController;
 use App\Models\ReactionPost;
@@ -30,9 +32,13 @@ use App\Models\ReactionPost;
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
 
+
+    Route::get('/chat/rooms', [ChatController::class, 'rooms']);
+    Route::get('/chat/room/{roomId}/messages', [ChatController::class, 'messages']);
+    Route::post('/chat/room/{roomId}/message', [ChatController::class, 'newMessage']);
+
     Route::get('/user', [UserController::class, 'getUserDetails']);
 
-    Route::post('/imgProfile', [UserController::class, 'updateProfileImage']);
 
 
 
@@ -60,18 +66,22 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::post('/publication/{pub_id}/react', [ReactionPostController::class, 'react']);
     Route::delete('/publication/{pub_id}/unreact', [ReactionPostController::class, 'unreact']);
+    Route::post('/publication/{pub_id}/react-or-unreact', [ReactionPostController::class, 'reactOrUnreact']);
+
 
     Route::get('/publication/{pub_id}', [ReactionPostController::class, 'checkUserReaction']);
 
+    Route::put('/imgProfile', [UserController::class, 'updateProfileImage']);
 
+    Route::post('/changer-mot-de-passe',[UserController::class, 'changerMotDePasse']);
 
 });
 
-Route::get('/publication/{pub_id}/userReacted', [ReactionPostController::class, 'getUsersWhoReacted']);
+
+// Route::get('/publication/{pub_id}/userReacted', [ReactionPostController::class, 'getUsersWhoReacted']);
 
 
 
-Route::post('/changer-mot-de-passe',[UserController::class, 'changerMotDePasse']);
 Route::post('/profile/{id}', [UserController::class, 'update']);
 
 
@@ -90,7 +100,6 @@ Route::post('/logout', [LogoutController::class, 'logout']);
 Route::delete('/DeleteUser/{id}', [UserController::class, 'deleteUser']);
 
 
-Route::get('/comment/{id}', [CommentaireController::class, 'afficherCommentaire']);
 
 
 
@@ -121,22 +130,24 @@ Route::get('/participants/filtrer-by-id/{id}', [ParticipantController::class, 'f
 Route::get('/participants/filtrer-by-event/{id}', [ParticipantController::class, 'filtrerParticipantsParEvenement']);
 
 
+Route::get('/imgEvent', [EvenementController::class, 'getImageUrl']);
 
 
-Route::post('/permissions/create', [PermissionController::class, 'createPermission']);
-Route::put('/permissions/edit/{id}', [PermissionController::class, 'editPermission']);
-Route::delete('/permissions/delete/{id}', [PermissionController::class, 'deletePermission']);
-Route::get('/permissions', [PermissionController::class, 'showPermissions']);
+// Route::post('/permissions/create', [PermissionController::class, 'createPermission']);
+// Route::put('/permissions/edit/{id}', [PermissionController::class, 'editPermission']);
+// Route::delete('/permissions/delete/{id}', [PermissionController::class, 'deletePermission']);
+// Route::get('/permissions', [PermissionController::class, 'showPermissions']);
 
 
-Route::post('/roles/create',[RoleController::class, 'createRole'] );
-Route::put('/roles/edit/{id}', [RoleController::class, 'editRole']);
-Route::delete('/roles/delete/{id}', [RoleController::class, 'deleteRole']);
-Route::get('/roles',[RoleController::class, 'createRoleshowRoles']);
+// Route::post('/roles/create',[RoleController::class, 'createRole'] );
+// Route::put('/roles/edit/{id}', [RoleController::class, 'editRole']);
+// Route::delete('/roles/delete/{id}', [RoleController::class, 'deleteRole']);
+// Route::get('/roles',[RoleController::class, 'createRoleshowRoles']);
 
-Route::post('give-permission-to-role',  [PermissionController::class, 'givePermissionToRole']);
-Route::post('remove-permission-from-role',  [PermissionController::class, 'removePermissionFromRole']);
-Route::get('filter-permissions-by-role-id/{roleId}', [PermissionController::class, 'filterPermissionsByRoleId']);
+// Route::post('give-permission-to-role',  [PermissionController::class, 'givePermissionToRole']);
+// Route::post('remove-permission-from-role',  [PermissionController::class, 'removePermissionFromRole']);
+// Route::get('filter-permissions-by-role-id/{roleId}', [PermissionController::class, 'filterPermissionsByRoleId']);
 
 
 Route::get('/commentaires/{publication_id}', [CommentaireController::class, 'afficherCommentaires']);
+Route::get('/load-comments/{publication_id}', [PublicationController::class, 'loadComments']);

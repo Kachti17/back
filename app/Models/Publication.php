@@ -35,4 +35,5 @@ class Publication extends Model
         return $this->hasMany(ReactionPost::class, 'pub_id');
     }
 
+
 }

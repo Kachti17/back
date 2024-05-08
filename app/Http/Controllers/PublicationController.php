@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Publication;
 use App\Models\Contenu;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 
@@ -34,8 +35,8 @@ class PublicationController extends Controller
             $publication->user_id = $userId;
             $publication->save();
 
-            return response()->json(['message' => 'Publication créée avec succès'], 200);
-    }
+            return response()->json(['message' => 'Publication créée avec succès', 'publication' => $publication], 200);
+        }
 
 
     public function createContenu(Request $request)
@@ -44,26 +45,36 @@ class PublicationController extends Controller
             // Validation des données
             $validatedData = $request->validate([
                 'texte' => 'nullable|string', // Le texte est facultatif
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // L'image est facultative
-                'video' => 'nullable|mimetypes:video/mp4|max:20000', // La vidéo est facultative
+                'image_path' => 'nullable|string', // L'image est facultative
+                'video_path' => 'nullable|mimetypes:video/mp4|max:20000', // La vidéo est facultative
                 'lien' => 'nullable|url', // Le lien est facultatif
             ]);
 
-            // Création d'un nouveau contenu
             $contenu = new Contenu();
 
-            // Stockage du contenu en fonction du type
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('images');
-                $contenu->image_path = $imagePath;
-            } elseif ($request->hasFile('video')) {
-                $videoPath = $request->file('video')->store('videos');
-                $contenu->video_path = $videoPath;
-            } elseif (!empty($validatedData['lien'])) {
+                // $imagePath = $this->handleFileUpload($request->file('image_path'), 'images/evenements/');
+                // $contenu->image_path = $imagePath;
+
+
+                // $videoPath = $this->handleFileUpload($request->file('video_path'), 'images/evenements/');
+                // $contenu->video_path = $videoPath;
+
+                    $request['base64string'] = $this->handleFileUpload($request['image_path'], 'images/evenements/');
+                    $contenu->image_path = $request['base64string'];
+
+
+                // if (!empty($validatedData['image_path'])) {
+                //     $contenu->image_path = $validatedData['image_path'];
+                // }
+
+                // if (!empty($validatedData['video_path'])) {
+                //     $contenu->video_path = $validatedData['video_path'];
+                // }
+            if (!empty($validatedData['lien'])) {
                 $contenu->lien = $validatedData['lien'];
-            } else {
+            } if (!empty($validatedData['texte']))
                 $contenu->texte = $validatedData['texte'] ?? '';
-            }
+
 
             // Sauvegarde du contenu
             $contenu->save();
@@ -74,14 +85,6 @@ class PublicationController extends Controller
             throw new \Exception("Erreur lors de la création du contenu: " . $e->getMessage());
         }
     }
-
-
-
-
-
-
-
-
     public function updatePublication(Request $request, $id)  //juste tbadel el isApproved ne9sa les donnees fel contenu
     {
          // Récupérer la publication à modifier
@@ -96,10 +99,12 @@ class PublicationController extends Controller
             if ($request->has('texte')) {
                 $contenu->texte = $request->texte;
             }
-            if ($request->has('image')) {
-                $contenu->image_path = $request->image;
+            if ($request->has('image_path')) {
+                $base64string = $this->handleFileUpload($request->image_path, 'images/evenements/');
+
+                $contenu->image_path = $base64string;
             }
-            if ($request->has('video')) {
+            if ($request->has('video_path')) {
                 $contenu->video_path = $request->video;
             }
             if ($request->has('lien')) {
@@ -118,6 +123,47 @@ class PublicationController extends Controller
 
 
 
+    public function handleFileUpload(string|null $file, string $path)
+    {
+        if (isset($file) && Str::contains($file, 'base64')) {
+
+
+            $decodedFile = $this->decodedBase64File($file);
+            $storePath = $path . $decodedFile['path'];
+
+            $res = Storage::disk('public')->put($storePath,  $decodedFile['file']);
+
+
+            if ($res) {
+                return $storePath;
+            }
+        }
+
+        return null;
+    }
+
+    public function decodedBase64File($file_64)
+    {
+        $extension = explode('/', explode(':', substr($file_64, 0, strpos($file_64, ';')))[1])[1];
+        $replace = substr($file_64, 0, strpos($file_64, ',')+1);
+        $file = str_replace($replace, '', $file_64);
+        $decodedFile = str_replace(' ', '+', $file);
+        $path =  Str::random(5) . time() .'.'. $extension;
+
+        return [
+            'path' => $path,
+            'file' => base64_decode($decodedFile)
+        ];
+    }
+
+
+
+
+
+
+
+
+
     public function deletePublication($id)
     {
         try {
@@ -125,7 +171,7 @@ class PublicationController extends Controller
             $publication = Publication::findOrFail($id);
 
             // Vérifier si l'utilisateur connecté est l'auteur de la publication ou s'il est administrateur
-            if ($publication->user_id !== auth()->user()->id ) {
+            if ($publication->user_id !== auth()->user()->id && Auth::user()->role !== 'admin' ) {
                 throw new \Exception("Vous n'êtes pas autorisé à supprimer cette publication.");
             }
 
@@ -170,17 +216,35 @@ class PublicationController extends Controller
                                         ->get();
     return response()->json($modificationRequests, 200);
 }
-
-
-     // Consulter les publications approuvées
-     public function viewApprovedPublications()
+public function viewApprovedPublications()
      {
-         $approvedPublications = Publication::with(['contenu', 'user' , 'commentaires'])
+         $approvedPublications = Publication::with(['contenu', 'user','commentaires'])
          ->where('isApproved', 1)
+         ->join('contenus', 'publications.contenu_id', '=', 'contenus.id')
+         ->orderBy('contenus.updated_at', 'desc')
          ->get();
+         
          return response()->json($approvedPublications, 200);
      }
-
+    // //  public function viewApprovedPublications()
+    // //  {
+    // //      $approvedPublications = Publication::with(['contenu', 'user'])
+    // //      ->where('isApproved', 1)
+    // //      ->join('contenus', 'publications.contenu_id', '=', 'contenus.id')
+    // //      ->orderBy('contenus.updated_at', 'desc')
+    // //      ->get();
+    // //      foreach ($approvedPublications as $publication) {
+    // //         $publication->load(['commentaires' => function ($query) {
+    // //             $query->orderBy('updated_at', 'asc')->take(2); // Limiter le nombre de commentaires si nécessaire
+    // //         }]);
+    // //     }
+    //      return response()->json($approvedPublications, 200);
+    //  }
+     public function loadComments(Publication $publication)
+     {
+         $additionalComments = $publication->commentaires()->orderBy('updated_at', 'asc')->skip(2)->take(2)->get();
+         return response()->json($additionalComments, 200);
+     }
 
      public function viewPublicationsByPopularity()     //lel admin
      {
@@ -222,8 +286,11 @@ public function filterByUserId(Request $request)
             throw new \Exception("L'utilisateur n'est pas connecté.");
         }
 
-        $filteredPublications = Publication::where('user_id', $userId)
+        $filteredPublications = Publication::with(['contenu', 'user' , 'commentaires'])
+            ->where('user_id', $userId)
             ->where('isApproved', 1)
+            ->join('contenus', 'publications.contenu_id', '=', 'contenus.id')
+            ->orderBy('contenus.updated_at', 'desc')
             ->get();
 
         return response()->json($filteredPublications, 200);

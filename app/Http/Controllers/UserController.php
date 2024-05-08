@@ -31,6 +31,69 @@ use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
 
+    public function showAllUsers()
+    {
+       $users = User::all();
+
+
+
+       return response()->json($users);
+    }
+
+    public function updateProfileImage(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($request->has('img_profile')) {
+            $base64string = $this->handleFileUpload($request->img_profile, 'images/evenements/');
+
+            if ($base64string) {
+                $user->img_profile = $base64string;
+                $user->save();
+
+                return response()->json(['user' => $user], 200);
+            }
+
+            return response()->json(['message' => 'Impossible de télécharger l\'image de profil'], 400);
+        }
+
+        return response()->json(['message' => 'Aucune image de profil fournie'], 400);
+    }
+
+
+
+public function handleFileUpload(string|null $file, string $path)
+    {
+        if (isset($file) && Str::contains($file, 'base64')) {
+
+
+            $decodedFile = $this->decodedBase64File($file);
+            $storePath = $path . $decodedFile['path'];
+
+            $res = Storage::disk('public')->put($storePath,  $decodedFile['file']);
+
+
+            if ($res) {
+                return $storePath;
+            }
+        }
+
+        return null;
+    }
+
+    public function decodedBase64File($file_64)
+    {
+        $extension = explode('/', explode(':', substr($file_64, 0, strpos($file_64, ';')))[1])[1];
+        $replace = substr($file_64, 0, strpos($file_64, ',')+1);
+        $file = str_replace($replace, '', $file_64);
+        $decodedFile = str_replace(' ', '+', $file);
+        $path =  Str::random(5) . time() .'.'. $extension;
+
+        return [
+            'path' => $path,
+            'file' => base64_decode($decodedFile)
+        ];
+    }
     public function postReaction(Request $request, Publication $post)
 {
     $data = $request->validate([
@@ -104,11 +167,7 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function showAllUsers()
-    {
-       $user = User::all();
-       return response()->json($user);
-    }
+
 
     public function showUserList()
     {
@@ -148,6 +207,7 @@ class UserController extends Controller
         if (isset($validatedData['tel'])) {
             $user->tel = $validatedData['tel'];
         }
+
 
         // Sauvegardez les modifications de l'utilisateur
         $user->save();
@@ -343,7 +403,7 @@ public function acceptModificationRequest(Request $request, $id)
     {
         $request->validate([
             'email' => 'required',
-            'nouveau_mot_de_passe' => 'required|min:8',
+            'nouveau_mot_de_passe' => 'required|min:6',
             'verification_mot_de_passe' => 'required|same:nouveau_mot_de_passe',
         ]);
 
@@ -365,36 +425,36 @@ public function acceptModificationRequest(Request $request, $id)
     }
 
 
-    public function updateProfileImage(Request $request)
-{
-    $data = $request->validate([
-        'img_profile' => ['nullable', 'image']
-    ]);
+//     public function updateProfileImage(Request $request)
+// {
+//     $data = $request->validate([
+//         'img_profile' => ['nullable', 'image']
+//     ]);
 
-    $user = $request->user();
-    $profileImage = $data['img_profile'] ?? null;
+//     $user = $request->user();
+//     $profileImage = $data['img_profile'] ?? null;
 
-    if ($user) {
-        $profileImage = $data['img_profile'] ?? null;
+//     if ($user) {
+//         $profileImage = $data['img_profile'] ?? null;
 
-        if ($profileImage) {
-            if ($user->img_profile) {
-                Storage::disk('public')->delete($user->img_profile);
-            }
+//         if ($profileImage) {
+//             if ($user->img_profile) {
+//                 Storage::disk('public')->delete($user->img_profile);
+//             }
 
-            $path = $profileImage->store('user-' . $user->id, 'public');
-            $user->update(['img_profile' => $path]);
+//             $path = $profileImage->store('user-' . $user->id, 'public');
+//             $user->update(['img_profile' => $path]);
 
-            $successMessage = 'Votre image de profil a été mise à jour.';
-            return back()->with('success', $successMessage);
-        }
+//             $successMessage = 'Votre image de profil a été mise à jour.';
+//             return back()->with('success', $successMessage);
+//         }
 
-        $errorMessage = 'Une erreur est survenue lors de la mise à jour de votre image de profil.';
-        return back()->with('error', $errorMessage);
-    }
+//         $errorMessage = 'Une erreur est survenue lors de la mise à jour de votre image de profil.';
+//         return back()->with('error', $errorMessage);
+//     }
 
-    abort(403, 'Unauthorized action.'); // Redirection si l'utilisateur n'est pas authentifié
-}
+//     abort(403, 'Unauthorized action.'); // Redirection si l'utilisateur n'est pas authentifié
+// }
 
 
 

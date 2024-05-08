@@ -27,4 +27,18 @@ class Evenement extends Model
         return $this->belongsToMany(User::class, 'participants');
     }
 
+
+    public function getImageAttribute($value)
+    {
+        if($value){
+            if ($this->attributes['image']) {
+              return asset('storage/' . $this->attributes['image']);
+             }
+             return $this->image;
+        }
+         return null;
+
+
+    }
+
 }

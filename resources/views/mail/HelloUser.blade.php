@@ -63,6 +63,8 @@
             <li><strong>Prénom :</strong> {{ $user->prenom }}</li>
             <li><strong>Email :</strong> {{ $user->email }}</li>
             <li><strong>Mot de passe temporaire :</strong> {{ $password }}</li>
+            <li><strong>Rôle :</strong> {{ $user->role }}</li>
+
         </ul>
         <div class="footer">
             <p>Merci de votre confiance !</p>

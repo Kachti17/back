@@ -11,7 +11,7 @@ class Commentaire extends Model
     protected $with = ['user'];
 
     protected $fillable = [
-        'contenu_comm', 'date_comm',
+        'contenu_comm', 'date_comm', 'current_page', 'last_page',
     ];
 
     public function publication()
