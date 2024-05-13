@@ -19,7 +19,14 @@ class AuthController extends Controller
     {
         return view('auth.login');
     }
+    public function authenticate(Request $request)
+    {
+        if (Auth::check()) {
+            return Auth::user();
+        }
 
+        return response()->json(['error' => 'Unauthenticated.'], 401);
+    }
     /**
      * Handle an incoming authentication request.
      */

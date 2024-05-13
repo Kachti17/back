@@ -67,7 +67,7 @@ public function createEvent(Request $request)
         $participant->inscription_date = now();
         $participant->save();
 
-        return response()->json(['message' => 'L\'événement a été créé avec succès.','evenement' => $evenement], 200);
+        return response()->json(['message' => 'The event was successfully created.','evenement' => $evenement], 200);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Erreur lors de la création de l\'événement. Veuillez réessayer.'], 500);
     }
@@ -145,7 +145,7 @@ public function decodedBase64File($file_64)
 
             return response()->json(['message' => 'Event successfully modified.'], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la modification de l\'événement', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Event modification error', 'error' => $e->getMessage()], 500);
         }
     }
 

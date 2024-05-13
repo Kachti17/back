@@ -18,7 +18,13 @@ class ChatRoomSeeder extends Seeder
     'name'=>'General'
     ]);
     DB::table('chat_rooms')->insert([
-        'name'=>'Tech Talk'
+        'name'=>'Call center'
         ]);
+     DB::table('chat_rooms')->insert([
+            'name'=>'IT department'
+            ]);
+            DB::table('chat_rooms')->insert([
+                'name'=>'Administration'
+                ]);
     }
 }
