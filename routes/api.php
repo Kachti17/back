@@ -37,6 +37,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/chat/room/{roomId}/messages', [ChatController::class, 'messages']);
     Route::post('/chat/room/{roomId}/message', [ChatController::class, 'newMessage']);
     Route::get('/send', [ChatController::class, 'send']);
+    Route::delete('/messages/{messageId}', [ChatController::class, 'deleteMessage']);
 
 
 
@@ -78,6 +79,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/imgProfile', [UserController::class, 'updateProfileImage']);
 
     Route::post('/changer-mot-de-passe',[UserController::class, 'changerMotDePasse']);
+
+
+    Route::post('/chat-rooms', [ChatController::class, 'addRoom']);
+Route::delete('/chat-rooms/{id}', [ChatController::class, 'destroy']);
+Route::get('/chat-rooms', [ChatController::class, 'showAll']);
 
 });
 

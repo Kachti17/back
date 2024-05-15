@@ -13,6 +13,34 @@ use App\Events\NewChatMessage;
 
 class ChatController extends Controller
 {
+    public function addRoom(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:chat_rooms|max:255',
+        ]);
+
+        $chatRoom = ChatRoom::create($request->all());
+
+        return response()->json(['chat_room' => $chatRoom, 'message' => 'Chat room created successfully.'], 201);
+    }
+
+    public function showAll()
+{
+    $chatRooms = ChatRoom::all();
+
+    return response()->json(['message' => 'List of chat rooms', 'data' => $chatRooms], 200);
+}
+    public function destroy($id)
+{
+    $chatRoom = ChatRoom::find($id);
+    if (!$chatRoom) {
+        return response()->json(['message' => 'Chat room not found'], 404);
+    }
+
+    $chatRoom->delete();
+
+    return response()->json(['message' => 'Chat room deleted successfully'], 200);
+}
     public function __construct(){
         $this->middleware('auth');
     }
@@ -36,13 +64,19 @@ class ChatController extends Controller
         $newMessage->corps=$validatedData['corps'];
         $newMessage->save();
         event(new NewChatMessage($newMessage));
-       // broadcast(new NewChatMessage($newMessage))->toOthers();
         return $newMessage;
     }
-    // public function send(Request $request){
-    //     return $request->all();
-    //     $user = User::find(Auth::id());
-    //     event(new NewChatMessage($request->message,$user));
+    public function deleteMessage($messageId){
+        $message = Message::findOrFail($messageId);
 
-    // }
+        if (Auth::id() === $message->user_id || Auth::user()->role === 'admin') {
+            $message->delete();
+            return response()->json(['message' => 'Message successfully deleted'], 200);
+        }
+
+        return response()->json(['error' => 'Vous n\'êtes pas autorisé à supprimer ce message'], 403);
+    }
+
+
+
 }

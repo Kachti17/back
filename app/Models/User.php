@@ -16,7 +16,7 @@ class User extends Authenticatable
     use HasApiTokens,HasRoles;
 
     protected $fillable = [
-        'nom', 'prenom', 'email', 'password', 'tel','img_profile','role',
+        'nom', 'prenom', 'email', 'password', 'tel','img_profile','role','departement',
     ];
 
     public function publications()
@@ -27,6 +27,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Message::class);
     }
+    public function chatRooms()
+{
+    return $this->belongsToMany(ChatRoom::class)->withTimestamps();
+}
 
     public function getImgProfileAttribute($value)
     {

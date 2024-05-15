@@ -57,12 +57,7 @@
         <h1>Publication approuvée</h1>
         <p>Bonjour {{ $publication->user->prenom }} {{ $publication->user->nom }},</p>
         <p>Votre publication a été approuvée avec succès.</p>
-        <p>Voici les détails de votre publication :</p>
-        <ul>
-            <li><strong>Date de publication :</strong> {{ $publication->date_pub }}</li>
-            <li><strong>Contenu :</strong> {{ $publication->contenu->nom_contenu }}</li>
-            <!-- Ajoutez d'autres détails de la publication ici -->
-        </ul>
+
         <div class="footer">
             <p>Merci pour votre contribution !</p>
         </div>
