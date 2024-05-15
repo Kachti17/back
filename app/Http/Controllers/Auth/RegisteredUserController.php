@@ -32,19 +32,22 @@ class RegisteredUserController extends Controller
             'password' => 'required|string|min:6',
             'tel' => 'nullable|string|max:20',
             'role' => 'nullable|in:back office,user,admin',
+            'departement' => 'nullable|in:It department,Call center',
+
         ]);
 
         if (User::where('email', $request->email)->exists()) {
-            return response()->json(['error' => 'Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre.'], 400);
+            return response()->json(['error' => 'This e-mail address is already in use. Please choose another one.'], 400);
         }
 
-        if (User::where('password', $request->password)->exists()) {
-            return response()->json(['error' => 'Ce mot de passe est déjà utilisé. Veuillez en choisir un autre.'], 400);
-        }
+
         if ($request->role === 'admin' && User::where('role', 'admin')->exists()) {
             return response()->json(['error' => 'Un administrateur existe déjà.'], 400);
         }
 
+        // if ($request->role === 'user') {
+        //     $userData['departement'] = $request->departement;
+        // }
         $user = User::create([
             'nom' => $request->nom,
             'prenom' => $request->prenom,
@@ -52,7 +55,10 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'tel' => $request->tel,
             'role' => $request->role ?? 'user',
+            'departement' => $request->departement,
+
         ]);
+
         $password = $request->password;
 
         Mail::to($user->email)->send(new MailNotify($user, $password));
@@ -61,7 +67,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return response()->json(['message' => 'Compte utilisateur créé avec succès'], 201);
+        return response()->json(['message' => 'User created successfully'], 201);
     }
 
 

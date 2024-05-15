@@ -64,6 +64,8 @@
             <li><strong>Email :</strong> {{ $user->email }}</li>
             <li><strong>Mot de passe temporaire :</strong> {{ $password }}</li>
             <li><strong>Rôle :</strong> {{ $user->role }}</li>
+            <li><strong>Departement :</strong> {{ $user->departement }}</li>
+
 
         </ul>
         <div class="footer">

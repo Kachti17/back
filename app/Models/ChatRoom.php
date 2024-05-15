@@ -8,8 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class ChatRoom extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'name',
+    ];
+    public function users()
+{
+    return $this->belongsToMany(User::class)->withTimestamps();
+}
 
-    public function messages(){
-        return $this->hasMany('App\Models\Message');
-    }
+public function messages()
+{
+    return $this->hasMany(Message::class);
+}
 }

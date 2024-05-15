@@ -158,8 +158,12 @@ public function handleFileUpload(string|null $file, string $path)
                 'password' => bcrypt($request->password), // Hashage du mot de passe
                 'tel' => $request->input('tel'),
                 'img_profile' => null,
-                //role_id' => $request->input('role'),
-            ]);
+
+                            ]);
+                            if ($request->input('role') === 'user') {
+                                $user->departement = $request->input('departement');
+                                $user->save();
+                            }
 
             return response()->json(['message' => 'Utilisateur créé avec succès!']);
         }
